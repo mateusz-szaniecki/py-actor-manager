@@ -16,7 +16,7 @@ class ActorManager:
                 first_name TEXT NOT NULL, 
                 last_name TEXT NOT NULL 
             )
-            """
+        """
         )
         self.conn.commit()
 
