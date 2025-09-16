@@ -1,3 +1,4 @@
+import re
 import sqlite3
 from app.models import Actor
 
@@ -5,20 +6,27 @@ from app.models import Actor
 class ActorManager:
     def __init__(self, db_name: str, table_name: str) -> None:
         self.db_name = db_name
-        self.table_name = table_name
+        self.table_name = self._normalize_table_name(table_name)
         self.conn = sqlite3.connect(self.db_name)
         self.conn.row_factory = sqlite3.Row
         self.cursor = self.conn.cursor()
         self.cursor.execute(
             f"""
-            CREATE TABLE IF NOT EXISTS {self.table_name}(
+            CREATE TABLE IF NOT EXISTS {self.table_name} (
                 id INTEGER PRIMARY KEY AUTOINCREMENT, 
                 first_name TEXT NOT NULL, 
-                last_name TEXT NOT NULL 
+                last_name TEXT NOT NULL
             )
-        """
+            """
         )
         self.conn.commit()
+
+    def _normalize_table_name(self, table_name: str) -> str:
+        if not re.match(r"^[A-Za-z_]+$", table_name):
+            raise ValueError(f"Invalid table name: {table_name}")
+        if not table_name.endswith("s"):
+            table_name += "s"
+        return table_name
 
     def create(self, first_name: str, last_name: str) -> Actor:
         self.cursor.execute(
@@ -38,7 +46,12 @@ class ActorManager:
             for row in rows
         ]
 
-    def update(self, pk: int, new_first_name: str, new_last_name: str) -> None:
+    def update(
+        self,
+        pk: int,
+        new_first_name: str,
+        new_last_name: str,
+    ) -> None:
         self.cursor.execute(
             f"UPDATE {self.table_name} "
             "SET first_name = ?, last_name = ? WHERE id = ?",
